@@ -20,7 +20,7 @@ import (
 type DecisionsService service
 
 type DecisionsListOpts struct {
-	ScopeEquals *string `url:"scope,omitempty"`
+	ScopeEquals *string `url:"scopes,omitempty"`
 	ValueEquals *string `url:"value,omitempty"`
 	TypeEquals  *string `url:"type,omitempty"`
 	IPEquals    *string `url:"ip,omitempty"`
@@ -47,7 +47,7 @@ func (o *DecisionsStreamOpts) addQueryParamsToURL(url string) (string, error) {
 }
 
 type DecisionsDeleteOpts struct {
-	ScopeEquals  *string `url:"scope,omitempty"`
+	ScopeEquals  *string `url:"scopes,omitempty"`
 	ValueEquals  *string `url:"value,omitempty"`
 	TypeEquals   *string `url:"type,omitempty"`
 	IPEquals     *string `url:"ip,omitempty"`

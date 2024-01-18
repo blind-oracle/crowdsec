@@ -192,7 +192,7 @@ func CheckResponse(r *http.Response) error {
 	errorResponse := &ErrorResponse{}
 
 	data, err := io.ReadAll(r.Body)
-	if err == nil && len(data)>0 {
+	if err == nil && len(data) > 0 {
 		err := json.Unmarshal(data, errorResponse)
 		if err != nil {
 			return fmt.Errorf("http code %d, invalid body: %w", r.StatusCode, err)
