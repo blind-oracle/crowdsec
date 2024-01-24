@@ -2,7 +2,7 @@ module github.com/crowdsecurity/crowdsec
 
 go 1.21
 
-replace github.com/crowdsecurity/crowdsec => github.com/blind-oracle/crowdsec v0.0.0-20240118100521-e6b347da9f18
+replace github.com/crowdsecurity/crowdsec => github.com/blind-oracle/crowdsec v0.0.0-20240124074545-113e93fcda2f
 
 // Don't use the toolchain directive to avoid uncontrolled downloads during
 // a build, especially in sandboxed environments (freebsd, gentoo...).
