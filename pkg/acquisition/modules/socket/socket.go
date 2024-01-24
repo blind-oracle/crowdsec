@@ -48,7 +48,7 @@ func (s *SocketSource) GetUuid() string {
 }
 
 func (s *SocketSource) GetName() string {
-	return "syslog"
+	return "socket"
 }
 
 func (s *SocketSource) GetMode() string {
@@ -72,11 +72,11 @@ func (s *SocketSource) GetAggregMetrics() []prometheus.Collector {
 }
 
 func (s *SocketSource) ConfigureByDSN(dsn string, labels map[string]string, logger *log.Entry, uuid string) error {
-	return fmt.Errorf("syslog datasource does not support one shot acquisition")
+	return fmt.Errorf("socket datasource does not support one shot acquisition")
 }
 
 func (s *SocketSource) OneShotAcquisition(out chan types.Event, t *tomb.Tomb) error {
-	return fmt.Errorf("syslog datasource does not support one shot acquisition")
+	return fmt.Errorf("socket datasource does not support one shot acquisition")
 }
 
 func (s *SocketSource) UnmarshalConfig(yamlConfig []byte) error {
@@ -85,7 +85,7 @@ func (s *SocketSource) UnmarshalConfig(yamlConfig []byte) error {
 
 	err := yaml.UnmarshalStrict(yamlConfig, &s.config)
 	if err != nil {
-		return fmt.Errorf("cannot parse syslog configuration: %w", err)
+		return fmt.Errorf("cannot parse socket configuration: %w", err)
 	}
 
 	if s.config.Proto == "" {
@@ -113,7 +113,7 @@ func (s *SocketSource) UnmarshalConfig(yamlConfig []byte) error {
 
 func (s *SocketSource) Configure(yamlConfig []byte, logger *log.Entry) error {
 	s.logger = logger
-	s.logger.Infof("Starting syslog datasource configuration")
+	s.logger.Infof("Starting socket datasource configuration")
 
 	err := s.UnmarshalConfig(yamlConfig)
 	if err != nil {
@@ -134,17 +134,15 @@ func (s *SocketSource) StreamingAcquisition(out chan types.Event, t *tomb.Tomb) 
 
 	err := s.server.Listen(s.config.Proto, s.config.Addr)
 	if err != nil {
-		return fmt.Errorf("could not start syslog server: %w", err)
+		return fmt.Errorf("could not start socket server: %w", err)
 	}
 
 	s.serverTomb = s.server.StartServer()
 
-	for i := 0; i < s.config.Threads; i++ {
-		t.Go(func() error {
-			defer trace.CatchPanic("crowdsec/acquis/syslog/live")
-			return s.handlePacket(t, in, out)
-		})
-	}
+	t.Go(func() error {
+		defer trace.CatchPanic("crowdsec/acquis/socket/live")
+		return s.handlePacket(t, in, out)
+	})
 
 	return nil
 }
@@ -156,19 +154,21 @@ func (s *SocketSource) handlePacket(t *tomb.Tomb, in chan string, out chan types
 		select {
 		case <-t.Dying():
 			if !killed {
-				s.logger.Info("Syslog datasource is dying")
+				s.logger.Info("Socket datasource is dying")
 				s.serverTomb.Kill(nil)
+				s.server.Close()
 				killed = true
 			}
 
 		case <-s.serverTomb.Dead():
-			s.logger.Info("Syslog server has exited")
+			s.logger.Info("Socket server has exited")
+			close(s.server.channel)
 			return nil
 
 		case p := <-in:
 			l := types.Line{
 				Raw:     p,
-				Module:  s.GetName(),
+				Module:  "socket",
 				Labels:  s.config.Labels,
 				Process: true,
 			}
